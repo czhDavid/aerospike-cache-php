@@ -14,13 +14,13 @@ composer require lmc/aerospike-cache
 ```
 
 ## Usage
-AerospikeCache takes as a parameters Aerospike Object, namespace with optional set, cache namespace and default TTL.
 ```php
 $aerospike = new \Aerospike(['hosts'=>[['addr'=>'127.0.0.1', 'port'=>3000]]]);
-$aerospikeCache = new AerospikeCache($aerospike, 'aerospkeNamespace', 'aerospikeSet', 'cacheNamespace', 3600);
+$aerospikeCache = new AerospikeCache($aerospike, 'aerospkeNamespace');
 ```
 
-AerospikeCache uses PSR-6 caching interface for manipulation with data.  
+AerospikeCache uses PSR-6 caching interface for manipulation with the data.  
+The AerospikeSymfony cache also comes bundeled with Symfony Cache adapter for DoctrineCache
 
 ## Changelog
 For latest changes see [CHANGELOG.md](CHANGELOG.md) file. We follow [Semantic Versioning](https://semver.org/).
