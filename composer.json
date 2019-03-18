@@ -14,7 +14,9 @@
         }
     },
     "require": {
-        "php": "^7.1"
+        "php": "^7.1",
+        "aerospike/aerospike-client-php": "~7.0",
+        "symfony/cache": "^4.2"
     },
     "require-dev": {
         "lmc/coding-standard": "^1.3",
