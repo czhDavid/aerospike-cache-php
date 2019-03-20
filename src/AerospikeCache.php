@@ -3,7 +3,6 @@
 namespace Lmc\AerospikeCache;
 
 use Symfony\Component\Cache\Adapter\AbstractAdapter;
-use Symfony\Component\Cache\Exception\CacheException;
 
 class AerospikeCache extends AbstractAdapter
 {
@@ -41,9 +40,7 @@ class AerospikeCache extends AbstractAdapter
 
         foreach ($records as $record) {
             if ($record['metadata'] !== null) {
-                $result[$record['key']['key']] = isset($record['bins'][self::WRAPPER_NAME])
-                    ? $record['bins'][self::WRAPPER_NAME]
-                    : null;
+                $result[$record['key']['key']] = $record['bins'][self::WRAPPER_NAME] ?? null;
             }
         }
 
@@ -69,25 +66,28 @@ class AerospikeCache extends AbstractAdapter
     {
         if ($namespace === '') {
             $statusCode = $this->aerospike->truncate($this->namespace, $this->set, 0);
+            $cleared = $this->isStatusOkOrNotFound($statusCode);
         } else {
-            $clearNamespace = function ($record) use ($namespace): void {
+            $removedAllRecords = true;
+            $clearNamespace = function ($record) use ($namespace, &$removedAllRecords): bool {
                 if ($namespace === mb_substr($record['key']['key'], 0, mb_strlen($namespace))) {
-                    $status = $this->aerospike->remove($record['key']);
+                    $statusCodeFromRemove = $this->aerospike->remove($record['key']);
 
-                    if (!$this->isStatusOkOrNotFound($status)) {
-                        throw new CacheException();
+                    if (!$this->isStatusOkOrNotFound($statusCodeFromRemove)) {
+                        $removedAllRecords = false;
+
+                        return false;
                     }
                 }
+
+                return true;
             };
 
-            try {
-                $statusCode = $this->aerospike->scan($this->namespace, $this->set, $clearNamespace);
-            } catch (CacheException $exception) {
-                return false;
-            }
+            $statusCodeFromScan = $this->aerospike->scan($this->namespace, $this->set, $clearNamespace);
+            $cleared = $removedAllRecords && $this->isStatusOkOrNotFound($statusCodeFromScan);
         }
 
-        return $this->isStatusOkOrNotFound($statusCode);
+        return $cleared;
     }
 
     protected function doDelete(array $ids): bool
@@ -104,14 +104,18 @@ class AerospikeCache extends AbstractAdapter
         return $removedAllItems;
     }
 
-    protected function doSave(array $values, $lifetime): bool
+    protected function doSave(array $values, $lifetime): array
     {
+        $failed = [];
         foreach ($values as $key => $value) {
             $data = [self::WRAPPER_NAME => $value];
             $statusCode = $this->aerospike->put($this->createKey($key), $data, $lifetime, [\Aerospike::OPT_POLICY_KEY => \Aerospike::POLICY_KEY_SEND]);
+            if ($statusCode !== \Aerospike::OK) {
+                $failed[] = $key;
+            }
         }
 
-        return $statusCode === \Aerospike::OK;
+        return $failed;
     }
 
     private function createKey(string $key): array
