@@ -41,8 +41,9 @@ class AerospikeCache extends AbstractAdapter
 
         foreach ($records as $record) {
             if ($record['metadata'] !== null) {
-                $result[$record['key']['key']] = isset($record['bins'][self::WRAPPER_NAME]) ?
-                    $record['bins'][self::WRAPPER_NAME] : null;
+                $result[$record['key']['key']] = isset($record['bins'][self::WRAPPER_NAME])
+                    ? $record['bins'][self::WRAPPER_NAME]
+                    : null;
             }
         }
 
@@ -51,22 +52,17 @@ class AerospikeCache extends AbstractAdapter
 
     private function initializeKeysForAerospike(array $ids): array
     {
-        return array_reduce(
-            $ids,
-            function (array $keys, $id) {
-                $keys[] = $this->createKey($id);
-
-                return $keys;
+        return array_map(
+            function ($id) {
+                return $this->createKey($id);
             },
-            []
+            $ids
         );
     }
 
     protected function doHave($id)
     {
-        $statusCode = $this->aerospike->get($this->createKey($id), $read);
-
-        return $statusCode === \Aerospike::OK;
+        return $this->aerospike->get($this->createKey($id), $ignoredRecord) === \Aerospike::OK;
     }
 
     protected function doClear($namespace = ''): bool
@@ -77,15 +73,18 @@ class AerospikeCache extends AbstractAdapter
             $clearNamespace = function ($record) use ($namespace): void {
                 if ($namespace === mb_substr($record['key']['key'], 0, mb_strlen($namespace))) {
                     $status = $this->aerospike->remove($record['key']);
+
                     if (!$this->isStatusOkOrNotFound($status)) {
-                        throw new CacheException($this->aerospike->error());
+                        throw new CacheException();
                     }
                 }
             };
 
-            $this->aerospike->scan($this->namespace, $this->set, $clearNamespace);
-
-            $statusCode = 0;
+            try {
+                $statusCode = $this->aerospike->scan($this->namespace, $this->set, $clearNamespace);
+            } catch (CacheException $exception) {
+                return false;
+            }
         }
 
         return $this->isStatusOkOrNotFound($statusCode);
