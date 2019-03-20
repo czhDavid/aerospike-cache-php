@@ -15,14 +15,20 @@
     },
     "require": {
         "php": "^7.1",
-        "aerospike/aerospike-client-php": "~7.0",
-        "doctrine/cache": "^1.8",
+        "aerospike/aerospike-client-php": "^7.0",
         "symfony/cache": "^4.2"
     },
     "require-dev": {
         "lmc/coding-standard": "^1.3",
         "phpstan/phpstan-shim": "^0.11",
         "phpunit/phpunit": "^7.5"
+    },
+    "suggest": {
+        "doctrine/cache": "Allows use of the DoctrineSymfonyAdapter for the AerospikeCache compatibility with Doctrine Cache"
+    },
+    "provide": {
+        "psr/cache-implementation": "1.0",
+        "psr/simple-cache-implementation": "1.0"
     },
     "config": {
         "sort-packages": true

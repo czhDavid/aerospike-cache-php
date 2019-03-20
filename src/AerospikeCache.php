@@ -1,9 +1,7 @@
-<?php
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace Lmc\AerospikeCache;
 
-use Aerospike;
 use Symfony\Component\Cache\Adapter\AbstractAdapter;
 use Symfony\Component\Cache\Exception\CacheException;
 
@@ -11,13 +9,13 @@ class AerospikeCache extends AbstractAdapter
 {
     private const WRAPPER_NAME = 'data';
 
-    /** @var Aerospike */
+    /** @var \Aerospike */
     private $aerospike;
 
-    /** @var string $aerospikeNamespace */
+    /** @var string */
     private $namespace;
 
-    /** @var string $set */
+    /** @var string */
     private $set;
 
     public function __construct(
@@ -55,10 +53,10 @@ class AerospikeCache extends AbstractAdapter
     {
         return array_reduce(
             $ids,
-            function (array $values, $id) {
-                $values[] = $this->createKey($id);
+            function (array $keys, $id) {
+                $keys[] = $this->createKey($id);
 
-                return $values;
+                return $keys;
             },
             []
         );
@@ -117,17 +115,13 @@ class AerospikeCache extends AbstractAdapter
         return $statusCode === \Aerospike::OK;
     }
 
-    private function createKey($key)
+    private function createKey(string $key): array
     {
         return $this->aerospike->initKey($this->namespace, $this->set, $key);
     }
 
     private function isStatusOkOrNotFound(int $statusCode): bool
     {
-        if ($statusCode === \Aerospike::ERR_RECORD_NOT_FOUND || $statusCode === \Aerospike::OK) {
-            return true;
-        }
-
-        return false;
+        return $statusCode === \Aerospike::ERR_RECORD_NOT_FOUND || $statusCode === \Aerospike::OK;
     }
 }

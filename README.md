@@ -15,12 +15,15 @@ composer require lmc/aerospike-cache
 
 ## Usage
 ```php
-$aerospike = new \Aerospike(['hosts'=>[['addr'=>'127.0.0.1', 'port'=>3000]]]);
+$aerospike = new \Aerospike(['hosts' => [['addr' => '127.0.0.1', 'port' => 3000]]]);
 $aerospikeCache = new AerospikeCache($aerospike, 'aerospkeNamespace');
 ```
 
 AerospikeCache uses PSR-6 caching interface for manipulation with the data.  
-The AerospikeSymfony cache also comes bundeled with Symfony Cache adapter for DoctrineCache
+The AerospikeCache also comes bundled with Symfony Cache adapter for DoctrineCache
+
+Creating a new Aerospike instance will immediately connect to the aerospike server,
+ which might take a while and it should be in `lazy` abstraction.
 
 ## Changelog
 For latest changes see [CHANGELOG.md](CHANGELOG.md) file. We follow [Semantic Versioning](https://semver.org/).
