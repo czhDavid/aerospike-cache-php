@@ -20,7 +20,7 @@ class AerospikeCache extends AbstractAdapter
     public function __construct(
         \Aerospike $aerospike,
         string $namespace,
-        string $set = 'cache',
+        string $set,
         string $cacheNamespace = '',
         int $defaultLifetime = 0
     ) {
@@ -69,18 +69,14 @@ class AerospikeCache extends AbstractAdapter
             $cleared = $this->isStatusOkOrNotFound($statusCode);
         } else {
             $removedAllRecords = true;
-            $clearNamespace = function ($record) use ($namespace, &$removedAllRecords): bool {
+            $clearNamespace = function ($record) use ($namespace, &$removedAllRecords): void {
                 if ($namespace === mb_substr($record['key']['key'], 0, mb_strlen($namespace))) {
                     $statusCodeFromRemove = $this->aerospike->remove($record['key']);
 
                     if (!$this->isStatusOkOrNotFound($statusCodeFromRemove)) {
                         $removedAllRecords = false;
-
-                        return false;
                     }
                 }
-
-                return true;
             };
 
             $statusCodeFromScan = $this->aerospike->scan($this->namespace, $this->set, $clearNamespace);
@@ -104,6 +100,10 @@ class AerospikeCache extends AbstractAdapter
         return $removedAllItems;
     }
 
+    /**
+     * @param int $lifetime
+     * @return string[] keys of values that failed during save operation
+     */
     protected function doSave(array $values, $lifetime): array
     {
         $failed = [];
