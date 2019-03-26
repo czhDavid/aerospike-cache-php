@@ -26,12 +26,14 @@ install:
   - travis_retry wget https://github.com/php-coveralls/php-coveralls/releases/download/v2.1.0/php-coveralls.phar
   - chmod +x php-coveralls.phar
 
-script:
+before_script:
     - cd vendor/aerospike/aerospike-client-php/src/
     - ./build.sh
     - make install
     - ../.travis/edit-php-ini.sh
     - cp ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini tmp-php.ini
+
+script:
     - composer tests-ci
 
 after_success:
