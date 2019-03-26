@@ -8,9 +8,9 @@ use PHPUnit\Framework\TestCase;
 class AerospikeCacheTest extends TestCase
 {
     /**
-     * @dataProvider doHaveProvider
+     * @dataProvider provideStatusCodes
      */
-    public function testDoHave(int $statusCode, bool $expectedValue): void
+    public function testShouldConfirmItemPresence(int $statusCode, bool $expectedReturnedValue): void
     {
         $aerospikeMock = $this->createMock(\Aerospike::class);
         $aerospikeCache = new AerospikeCache($aerospikeMock, 'test', 'cache');
@@ -27,27 +27,19 @@ class AerospikeCacheTest extends TestCase
 
         $hasItem = $aerospikeCache->hasItem('foo');
 
-        $this->assertEquals($expectedValue, $hasItem);
-    }
-
-    public function doHaveProvider(): array
-    {
-        return [
-            [\Aerospike::OK, true],
-            [\Aerospike::ERR_RECORD_NOT_FOUND, false],
-        ];
+        $this->assertSame($expectedReturnedValue, $hasItem);
     }
 
     /**
-     * @dataProvider doSaveProvider
+     * @dataProvider provideStatusCodes
      */
-    public function testDoSave(int $statusCode, bool $expectedResult): void
+    public function testShouldSaveItem(int $aerospikeStatusCode, bool $expectedSaveSuccessful): void
     {
         $aerospikeMock = $this->createMock(\Aerospike::class);
         $aerospikeCache = new AerospikeCache($aerospikeMock, 'test', 'cache');
 
         $aerospikeMock->method('put')
-                ->willReturn($statusCode);
+                ->willReturn($aerospikeStatusCode);
 
         $aerospikeMock->method('get')
                 ->willReturn(\Aerospike::OK);
@@ -57,32 +49,25 @@ class AerospikeCacheTest extends TestCase
                 ->willReturn($aerospikeKey);
 
         $cacheItem = $aerospikeCache->getItem('foo');
-        $result = $aerospikeCache->save($cacheItem);
+        $saveSuccessful = $aerospikeCache->save($cacheItem);
 
-        $this->assertEquals($expectedResult, $result);
-    }
-
-    public function doSaveProvider(): array
-    {
-        return [
-            [\Aerospike::OK, true],
-            [\Aerospike::ERR_CLIENT, false],
-        ];
+        $this->assertSame($expectedSaveSuccessful, $saveSuccessful);
     }
 
     /**
-     * @dataProvider doClearWithEmptyNamespaceProvider
+     * @dataProvider provideStatusCodes
      */
-    public function testDoClearWithEmptyNamespace(int $statusCode, bool $expectedResult): void
+    public function testShouldClearWithEmptyNamespaceName(int $aerospikeStatusCode, bool $expectedClearSuccessful): void
     {
         $aerospikeMock = $this->createMock(\Aerospike::class);
         $aerospikeCache = new AerospikeCache($aerospikeMock, 'test', 'cache');
 
-        $aerospikeMock->method('truncate')->willReturn($statusCode);
+        $aerospikeMock->method('truncate')
+            ->willReturn($aerospikeStatusCode);
 
-        $result = $aerospikeCache->clear();
+        $clearSuccessful = $aerospikeCache->clear();
 
-        $this->assertEquals($expectedResult, $result);
+        $this->assertSame($expectedClearSuccessful, $clearSuccessful);
     }
 
     public function doClearWithEmptyNamespaceProvider(): array
@@ -91,30 +76,29 @@ class AerospikeCacheTest extends TestCase
     }
 
     /**
-     * @dataProvider doClearNamespaceProvider
-     * @param mixed $expectedValue
-     * @param mixed $statusCodeForRemove
-     * @param mixed $statusCodeForScan
+     * @dataProvider provideStatusCodesForClearingNamespace
      */
-    public function testDoClearNamespace(int $statusCodeForRemove, int $statusCodeForScan, bool $expectedValue): void
+    public function testShouldClearNamespace(int $statusCodeForRemove, int $statusCodeForScan, bool $expectedValue): void
     {
         $aerospikeMock = $this->createMock(\Aerospike::class);
         $aerospikeCache = new AerospikeCache($aerospikeMock, 'test', 'cache', 'testNamespace');
 
-        $aerospikeMock->method('remove')->willReturn($statusCodeForRemove);
+        $aerospikeMock->method('remove')
+            ->willReturn($statusCodeForRemove);
 
-        $aerospikeMock->method('scan')->willReturnCallback(function ($namespace, $set, $callback) use ($statusCodeForScan) {
-            $callback(['key' => ['key' => 'testNamespace::test']])
+        $aerospikeMock->method('scan')
+            ->willReturnCallback(function ($namespace, $set, $callback) use ($statusCodeForScan) {
+                $callback(['key' => ['key' => 'testNamespace::test']]);
 
-            return $statusCodeForScan;
-        });
+                return $statusCodeForScan;
+            });
 
-        $clearResult = $aerospikeCache->clear('testNamespace');
+        $clearResult = $aerospikeCache->clear();
 
-        $this->assertEquals($expectedValue, $clearResult);
+        $this->assertSame($expectedValue, $clearResult);
     }
 
-    public function doClearNamespaceProvider(): array
+    public function provideStatusCodesForClearingNamespace(): array
     {
         return [
             [\Aerospike::OK, \Aerospike::OK, true],
@@ -125,26 +109,94 @@ class AerospikeCacheTest extends TestCase
     }
 
     /**
-     * @dataProvider doDeleteProvider
+     * @dataProvider provideStatusCodes
      */
-    public function testDoDelete(int $aerospikeStatus, bool $expectedValue): void
+    public function testShouldDeleteItem(int $aerospikeStatusCode, bool $expectedDeleteToSucced): void
     {
         $aerospikeMock = $this->createMock(\Aerospike::class);
         $aerospikeCache = new AerospikeCache($aerospikeMock, 'test', 'cache', 'testNamespace');
 
-        $aerospikeMock->method('initKey')->willReturn(['foo']);
-        $aerospikeMock->method('remove')->willReturn($aerospikeStatus);
+        $aerospikeMock->method('initKey')
+            ->willReturn(['foo']);
+        $aerospikeMock->method('remove')
+            ->willReturn($aerospikeStatusCode);
 
-        $result = $aerospikeCache->deleteItem('foo');
+        $deleteSuccessful = $aerospikeCache->deleteItem('foo');
 
-        $this->assertEquals($expectedValue, $result);
+        $this->assertSame($expectedDeleteToSucced, $deleteSuccessful);
     }
 
-    public function doDeleteProvider(): array
+    public function provideStatusCodes(): array
     {
         return [
             [\Aerospike::OK, true],
             [\Aerospike::ERR_CLIENT, false],
+        ];
+    }
+
+    /**
+     * @dataProvider doFetchProvider
+     */
+    public function testShouldReadExistingRecordsFromAerospike(array $cacheItemKeys, array $valuesReturnedByAerospike): void
+    {
+        $mockedAerospikeKeys = array_map(
+            function ($key) {
+                return ['ns' => 'aerospike', 'set' => 'cache', 'key' => $key];
+            },
+            $cacheItemKeys
+        );
+
+        $aerospikeMock = $this->createMock(\Aerospike::class);
+        $aerospikeCache = new AerospikeCache($aerospikeMock, 'test', 'cache');
+
+        $aerospikeMock
+            ->method('initKey')
+            ->willReturnOnConsecutiveCalls(...$mockedAerospikeKeys);
+
+        $aerospikeMock->expects($this->once())
+            ->method('getMany')
+            ->with($this->equalTo($mockedAerospikeKeys))
+            ->willReturnCallback(function ($keys, &$records) use ($valuesReturnedByAerospike) {
+                foreach ($keys as $key) {
+                    if (isset($valuesReturnedByAerospike[$key['key']])) {
+                        $record = [
+                            'key' => $key,
+                            'bins' => ['data' => $valuesReturnedByAerospike[$key['key']]],
+                            'metadata' => ['ttl' => 1000, 'generation' => 2],
+                        ];
+                    } else {
+                        $record = [
+                            'key' => $key,
+                            'bins' => null,
+                            'metadata' => null,
+                        ];
+                    }
+
+                    $records[] = $record;
+                }
+
+                return \Aerospike::OK;
+            });
+
+        $items = $aerospikeCache->getItems($cacheItemKeys);
+
+        foreach ($items as $item) {
+            if (isset($valuesReturnedByAerospike[$item->getKey()])) {
+                $this->assertTrue($item->isHit());
+                $this->assertEquals($valuesReturnedByAerospike[$item->getKey()], $item->get());
+            } else {
+                $this->assertFalse($item->isHit());
+            }
+        }
+    }
+
+    public function doFetchProvider(): array
+    {
+        return [
+            [['foo'], ['foo' => 'bar']],
+            [['foo'], []],
+            [['foo', 'hello'], ['foo' => 'bar', 'hello' => 'world']],
+            [['foo', 'hello'], ['foo' => 'bar']],
         ];
     }
 }

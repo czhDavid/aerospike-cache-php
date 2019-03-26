@@ -1,2 +1,5 @@
+includes:
+    - ./vendor/phpstan/phpstan-phpunit/extension.neon
 parameters:
     ignoreErrors:
+        - '#Method Aerospike::.+\(\) invoked with \d parameters?, 0 required#'

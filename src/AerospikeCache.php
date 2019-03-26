@@ -109,9 +109,14 @@ class AerospikeCache extends AbstractAdapter
         $failed = [];
         foreach ($values as $key => $value) {
             $data = [self::WRAPPER_NAME => $value];
-            $statusCode = $this->aerospike->put($this->createKey($key), $data, $lifetime, [\Aerospike::OPT_POLICY_KEY => \Aerospike::POLICY_KEY_SEND]);
+            $statusCode = $this->aerospike->put(
+                $this->createKey($key),
+                $data,
+                $lifetime,
+                [\Aerospike::OPT_POLICY_KEY => \Aerospike::POLICY_KEY_SEND]
+            );
             if ($statusCode !== \Aerospike::OK) {
-                $failed[] = $key;
+                $failed[] = (string) $key;
             }
         }
 
