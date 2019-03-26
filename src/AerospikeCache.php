@@ -70,7 +70,7 @@ class AerospikeCache extends AbstractAdapter
         } else {
             $removedAllRecords = true;
             $clearNamespace = function ($record) use ($namespace, &$removedAllRecords): void {
-                if ($namespace === mb_substr($record['key']['key'], 0, mb_strlen($namespace))) {
+                if (mb_strpos($record['key']['key'], $namespace) === 0) {
                     $statusCodeFromRemove = $this->aerospike->remove($record['key']);
 
                     if (!$this->isStatusOkOrNotFound($statusCodeFromRemove)) {
