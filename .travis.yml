@@ -34,6 +34,7 @@ before_script:
     - cp ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini tmp-php.ini
 
 script:
+    - cd ~
     - composer tests-ci
 
 after_success:
