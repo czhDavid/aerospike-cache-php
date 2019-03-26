@@ -104,7 +104,7 @@ class AerospikeCacheTest extends TestCase
         $aerospikeMock->method('remove')->willReturn($statusCodeForRemove);
 
         $aerospikeMock->method('scan')->willReturnCallback(function ($namespace, $set, $callback) use ($statusCodeForScan) {
-            call_user_func($callback, ['key' => ['key' => 'testNamespace::test']]);
+            $callback(['key' => ['key' => 'testNamespace::test']])
 
             return $statusCodeForScan;
         });
