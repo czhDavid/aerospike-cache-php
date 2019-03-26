@@ -34,7 +34,7 @@ before_script:
     - cp ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini tmp-php.ini
 
 script:
-    - cd ~
+    - cd $TRAVIS_BUILD_DIR
     - composer tests-ci
 
 after_success:
