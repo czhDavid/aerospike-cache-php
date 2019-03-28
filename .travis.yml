@@ -1,8 +1,8 @@
 language: php
 php:
-- 7.1
-- 7.2
-- 7.3
+    - 7.1
+    - 7.2
+    - 7.3
 addons:
     apt:
         packages:
@@ -21,21 +21,21 @@ matrix:
       after_success: ~
 
 install:
-- travis_retry composer self-update && composer --version
-- travis_retry composer update --no-interaction $DEPENDENCIES
-- travis_retry wget https://github.com/php-coveralls/php-coveralls/releases/download/v2.1.0/php-coveralls.phar
-- chmod +x php-coveralls.phar
+    - travis_retry composer self-update && composer --version
+    - travis_retry composer update --no-interaction $DEPENDENCIES
+    - travis_retry wget https://github.com/php-coveralls/php-coveralls/releases/download/v2.1.0/php-coveralls.phar
+    - chmod +x php-coveralls.phar
 
 before_script:
-- cd vendor/aerospike/aerospike-client-php/src/
-- ./build.sh
-- make install
-- ../.travis/edit-php-ini.sh
-- cp ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini tmp-php.ini
-- cd $TRAVIS_BUILD_DIR
+    - cd vendor/aerospike/aerospike-client-php/src/
+    - ./build.sh
+    - make install
+    - ../.travis/edit-php-ini.sh
+    - cp ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini tmp-php.ini
+    - cd $TRAVIS_BUILD_DIR
 
 script:
-- composer tests-ci
+    - composer tests-ci
 
 after_success:
-- travis_retry php php-coveralls.phar -v
+    - travis_retry php php-coveralls.phar -v

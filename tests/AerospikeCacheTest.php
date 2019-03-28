@@ -3,9 +3,7 @@ declare(strict_types=1);
 
 namespace Lmc\AerospikeCache;
 
-use PHPUnit\Framework\TestCase;
-
-class AerospikeCacheTest extends TestCase
+class AerospikeCacheTest extends AbstractTestCase
 {
     /**
      * @dataProvider provideStatusCodes
@@ -68,11 +66,6 @@ class AerospikeCacheTest extends TestCase
         $clearSuccessful = $aerospikeCache->clear();
 
         $this->assertSame($expectedClearSuccessful, $clearSuccessful);
-    }
-
-    public function doClearWithEmptyNamespaceProvider(): array
-    {
-        return [[\Aerospike::OK, true] , [\Aerospike::ERR_CLIENT, false]];
     }
 
     /**
@@ -183,7 +176,7 @@ class AerospikeCacheTest extends TestCase
         foreach ($items as $item) {
             if (isset($valuesReturnedByAerospike[$item->getKey()])) {
                 $this->assertTrue($item->isHit());
-                $this->assertEquals($valuesReturnedByAerospike[$item->getKey()], $item->get());
+                $this->assertSame($valuesReturnedByAerospike[$item->getKey()], $item->get());
             } else {
                 $this->assertFalse($item->isHit());
             }

@@ -12,20 +12,24 @@ class AerospikeCache extends AbstractAdapter
     private $aerospike;
 
     /** @var string */
-    private $namespace;
+    private $aerospikeNamespace;
 
     /** @var string */
     private $set;
 
+    /**
+     * @param string $aerospikeNamespace Namespace is a top level container for data in Aerospike - something similar to database name
+     * @param string $cacheNamespace The string prefixed to the keys of the items stored in this cache
+     */
     public function __construct(
         \Aerospike $aerospike,
-        string $namespace,
+        string $aerospikeNamespace,
         string $set,
         string $cacheNamespace = '',
         int $defaultLifetime = 0
     ) {
         $this->aerospike = $aerospike;
-        $this->namespace = $namespace;
+        $this->aerospikeNamespace = $aerospikeNamespace;
         $this->set = $set;
         parent::__construct($cacheNamespace, $defaultLifetime);
     }
@@ -65,7 +69,7 @@ class AerospikeCache extends AbstractAdapter
     protected function doClear($namespace = ''): bool
     {
         if ($namespace === '') {
-            $statusCode = $this->aerospike->truncate($this->namespace, $this->set, 0);
+            $statusCode = $this->aerospike->truncate($this->aerospikeNamespace, $this->set, 0);
             $cleared = $this->isStatusOkOrNotFound($statusCode);
         } else {
             $removedAllRecords = true;
@@ -79,7 +83,7 @@ class AerospikeCache extends AbstractAdapter
                 }
             };
 
-            $statusCodeFromScan = $this->aerospike->scan($this->namespace, $this->set, $clearNamespace);
+            $statusCodeFromScan = $this->aerospike->scan($this->aerospikeNamespace, $this->set, $clearNamespace);
             $cleared = $removedAllRecords && $this->isStatusOkOrNotFound($statusCodeFromScan);
         }
 
@@ -102,6 +106,7 @@ class AerospikeCache extends AbstractAdapter
 
     /**
      * @param int $lifetime
+     * @param array<string, mixed> $values
      * @return string[] keys of values that failed during save operation
      */
     protected function doSave(array $values, $lifetime): array
@@ -116,7 +121,7 @@ class AerospikeCache extends AbstractAdapter
                 [\Aerospike::OPT_POLICY_KEY => \Aerospike::POLICY_KEY_SEND]
             );
             if ($statusCode !== \Aerospike::OK) {
-                $failed[] = (string) $key;
+                $failed[] = $key;
             }
         }
 
@@ -125,7 +130,7 @@ class AerospikeCache extends AbstractAdapter
 
     private function createKey(string $key): array
     {
-        return $this->aerospike->initKey($this->namespace, $this->set, $key);
+        return $this->aerospike->initKey($this->aerospikeNamespace, $this->set, $key);
     }
 
     private function isStatusOkOrNotFound(int $statusCode): bool
