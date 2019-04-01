@@ -37,14 +37,14 @@ class AerospikeCacheTest extends AbstractTestCase
         $aerospikeCache = new AerospikeCache($aerospikeMock, 'test', 'cache');
 
         $aerospikeMock->method('put')
-                ->willReturn($aerospikeStatusCode);
+            ->willReturn($aerospikeStatusCode);
 
         $aerospikeMock->method('get')
-                ->willReturn(\Aerospike::OK);
+            ->willReturn(\Aerospike::OK);
 
         $aerospikeKey = ['ns' => 'test', 'set' => 'cache', 'key' => 'foo'];
         $aerospikeMock->method('initKey')
-                ->willReturn($aerospikeKey);
+            ->willReturn($aerospikeKey);
 
         $cacheItem = $aerospikeCache->getItem('foo');
         $saveSuccessful = $aerospikeCache->save($cacheItem);
@@ -71,8 +71,11 @@ class AerospikeCacheTest extends AbstractTestCase
     /**
      * @dataProvider provideStatusCodesForClearingNamespace
      */
-    public function testShouldClearNamespace(int $statusCodeForRemove, int $statusCodeForScan, bool $expectedValue): void
-    {
+    public function testShouldClearNamespace(
+        int $statusCodeForRemove,
+        int $statusCodeForScan,
+        bool $expectedValue
+    ): void {
         $aerospikeMock = $this->createMock(\Aerospike::class);
         $aerospikeCache = new AerospikeCache($aerospikeMock, 'test', 'cache', 'testNamespace');
 
@@ -130,8 +133,10 @@ class AerospikeCacheTest extends AbstractTestCase
     /**
      * @dataProvider doFetchProvider
      */
-    public function testShouldReadExistingRecordsFromAerospike(array $cacheItemKeys, array $valuesReturnedByAerospike): void
-    {
+    public function testShouldReadExistingRecordsFromAerospike(
+        array $cacheItemKeys,
+        array $valuesReturnedByAerospike
+    ): void {
         $mockedAerospikeKeys = array_map(
             function ($key) {
                 return ['ns' => 'aerospike', 'set' => 'cache', 'key' => $key];
